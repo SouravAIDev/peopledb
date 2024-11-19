@@ -2,6 +2,7 @@ fastapi
 uvicorn 
 sqlalchemy 
 pydantic 
+pydantic[email]
 
 # pip install fastapi uvicorn sqlalchemy pydantic
 
