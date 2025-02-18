@@ -77,8 +77,16 @@ class Skill(BaseModel):
         orm_mode = True
 
 from typing import Optional, List
-class Person(BaseModel):
-    id: Optional[int]  # Add the `id` field as optional so it's included in the response
+
+class PersonCreate(BaseModel):
+    name: str
+    email: EmailStr
+    phone_number: str
+    educations: List[Education] = []
+    skills: List[Skill] = []
+
+class PersonResponse(BaseModel):
+    id: int
     name: str
     email: EmailStr
     phone_number: str
@@ -88,7 +96,6 @@ class Person(BaseModel):
     class Config:
         orm_mode = True
 
-
 # Dependency to get the DB session
 def get_db():
     db = SessionLocal()
@@ -97,10 +104,9 @@ def get_db():
     finally:
         db.close()
 
-
 # API Endpoints
-@app.post("/persons/", response_model=Person)
-def create_person(person: Person, db: Session = Depends(get_db)):
+@app.post("/persons/", response_model=PersonResponse)
+def create_person(person: PersonCreate, db: Session = Depends(get_db)):
     # Check if the email already exists
     db_person = db.query(PersonDB).filter(PersonDB.email == person.email).first()
     if db_person:
@@ -136,13 +142,12 @@ def create_person(person: Person, db: Session = Depends(get_db)):
         db.add(new_skill)
 
     db.commit()
+    db.refresh(new_person)
 
     # Return the newly created person, which will include the ID
     return new_person
 
-
-
-@app.get("/persons/{person_id}", response_model=Person)
+@app.get("/persons/{person_id}", response_model=PersonResponse)
 def read_person(person_id: int, db: Session = Depends(get_db)):
     person = db.query(PersonDB).filter(PersonDB.id == person_id).first()
     if not person:
